@@ -9,17 +9,23 @@ import { Utils } from './modules/utils.js';
 // 立即定义全局处理函数，确保它在最早的时间被定义
 window.processPluginImage = (imageData) => {
   console.log('processPluginImage called (global)');
+  if (!imageData) {
+    console.error('No image data provided');
+    return;
+  }
+
   // 此时可能还没初始化完，添加到队列中
-  setTimeout(() => {
+  const processImage = () => {
     if (window.ocr && typeof window.ocr.processImage === 'function') {
-      console.log('Executing delayed OCR.processImage');
+      console.log('Executing OCR.processImage');
       window.ocr.processImage(imageData);
     } else {
-      console.error('OCR module not ready yet, image data might be lost');
-      // 存储图像数据到全局变量，以便后续处理
-      window._pendingImageData = imageData;
+      console.log('OCR module not ready yet, retrying in 100ms');
+      setTimeout(processImage, 100);
     }
-  }, 200);
+  };
+
+  processImage();
 };
 
 document.addEventListener('DOMContentLoaded', () => {
