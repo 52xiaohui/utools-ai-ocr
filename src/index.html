@@ -5,10 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>通义千问OCR</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- 先加载marked.js -->
+    <script src="js/marked.min.js"></script>
+    <!-- 然后配置MathJax -->
     <script>
         MathJax = {
             chtml: {
                 fontURL: './js/output/chtml/fonts'  // 设置字体文件的相对路径
+            },
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']], // 支持 $...$ 和 \(...\) 作为行内公式
+                displayMath: [['$$', '$$'], ['\\[', '\\]']], // 支持 $$...$$ 和 \[...\] 作为块级公式
+                processEscapes: true, // 允许使用 \$ 来显示字面上的 $
+                processEnvironments: true // 允许使用 \begin{equation}...\end{equation} 等环境
             },
             startup: {
                 typeset: false  // 初始不进行渲染
@@ -16,6 +25,31 @@
         };
     </script>
     <script id="MathJax-script" async src="js/tex-mml-chtml.js"></script>
+    <!-- marked配置 -->
+    <script>
+        window.addEventListener('load', () => {
+            if (typeof marked === 'undefined') {
+                console.error('Marked library not loaded');
+                return;
+            }
+            // 配置marked
+            marked.use({
+                breaks: true,
+                gfm: true
+            });
+            // 创建一个安全的解析函数
+            window.markdownParser = {
+                parse: function(text) {
+                    try {
+                        return marked.parse(text);
+                    } catch (error) {
+                        console.error('Markdown解析失败:', error);
+                        return text;
+                    }
+                }
+            };
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -34,7 +68,15 @@
             </div>
             <div class="panel result-panel">
                 <div class="result-container">
-                    <div id="result"></div>
+                    <div class="result-toolbar">
+                        <button class="btn btn-icon edit-btn" id="editBtn" title="编辑">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="result" class="result-content"></div>
+                    <textarea id="resultEditor" class="result-editor" style="display: none;"></textarea>
                     <div id="loadingSpinner"></div>
                 </div>
             </div>

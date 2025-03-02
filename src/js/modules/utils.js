@@ -14,6 +14,22 @@ export class Utils {
   }
 
   static initMathJax() {
-    return typeof MathJax !== 'undefined' && MathJax.typesetPromise;
+    if (typeof MathJax === 'undefined') {
+        console.error('MathJax not loaded');
+        return false;
+    }
+
+    try {
+        // 确保MathJax已经完全加载
+        if (!MathJax.typesetPromise) {
+            console.log('等待MathJax初始化...');
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('MathJax初始化失败:', error);
+        return false;
+    }
   }
 } 

@@ -91,7 +91,9 @@ export class Translate {
         .replace(/\n{3,}/g, '\n\n')
         .trim();
 
-      this.resultDiv.innerHTML = translatedText;
+      // 更新内容
+      window.ocr.updateContent(translatedText);
+      await window.ocr.renderResult(translatedText);
 
       // 渲染数学公式
       if (window.utils.initMathJax()) {

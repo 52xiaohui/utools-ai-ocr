@@ -13,22 +13,20 @@ export class UI {
   }
 
   initEventListeners() {
-    // 复制结果功能
-    this.copyBtn.addEventListener('click', () => {
-      const result = this.resultDiv.textContent;
-      window.services.copyToClipboard(result);
-      this.copyBtn.textContent = '已复制';
-      this.copyBtn.classList.add('copied');
-      setTimeout(() => {
-        this.copyBtn.textContent = '一键复制';
-        this.copyBtn.classList.remove('copied');
-      }, 2000);
+    // 复制功能
+    this.copyBtn?.addEventListener('click', () => {
+      if (window.ocr?.currentOcrText) {
+        window.services.copyToClipboard(window.ocr.currentOcrText);
+        window.utils.showToast('复制成功', 'success');
+      } else {
+        window.utils.showToast('没有可复制的内容', 'error');
+      }
     });
 
     // 一键清除功能
-    this.clearBtn.addEventListener('click', () => {
+    this.clearBtn?.addEventListener('click', () => {
       window.upload.clear();
-      this.resultDiv.innerHTML = '';
+      window.ocr.clear();
     });
 
     // 截图功能

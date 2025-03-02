@@ -2,8 +2,10 @@
 export class OCR {
   constructor() {
     this.resultDiv = document.getElementById('result');
+    this.resultEditor = document.getElementById('resultEditor');
     this.loadingSpinner = document.getElementById('loadingSpinner');
     this.retranslateBtn = document.getElementById('retranslateBtn');
+    this.editBtn = document.getElementById('editBtn');
     this.currentOcrText = null;
 
     this.initEventListeners();
@@ -11,13 +13,88 @@ export class OCR {
 
   initEventListeners() {
     // 重新识别功能
-    this.retranslateBtn.addEventListener('click', () => {
+    this.retranslateBtn?.addEventListener('click', () => {
       if (window.upload.currentImageData) {
         this.resultDiv.innerHTML = '';
         this.loadingSpinner.style.display = 'block';
         this.processImage(window.upload.currentImageData);
       }
     });
+
+    // 编辑功能
+    this.editBtn?.addEventListener('click', () => {
+      if (this.resultEditor.style.display === 'none') {
+        // 切换到编辑模式
+        this.resultEditor.value = this.resultDiv.innerText || '';
+        this.resultEditor.style.display = 'block';
+        this.resultDiv.style.display = 'none';
+        this.editBtn.title = '保存';
+      } else {
+        // 保存编辑并切换回显示模式
+        const newText = this.resultEditor.value;
+        this.updateContent(newText);
+        this.resultEditor.style.display = 'none';
+        this.resultDiv.style.display = 'block';
+        this.editBtn.title = '编辑';
+        this.renderResult(newText);
+      }
+    });
+  }
+
+  async renderResult(text) {
+    if (!text) return;
+
+    // 处理数学公式
+    const processedText = text
+      .replace(/\\（/g, '\\(')
+      .replace(/\\）/g, '\\)')
+      .replace(/\$([^$]+)\$/g, (match, formula) => {
+        if (!/^\\[a-zA-Z]/.test(formula.trim())) {
+          return `$${formula}$`;
+        }
+        return match;
+      })
+      .replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
+        if (!/^\\[a-zA-Z]/.test(formula.trim())) {
+          return `$$${formula}$$`;
+        }
+        return match;
+      })
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/([^\n])\n([^\n])/g, '$1\n$2')
+      .trim();
+
+    try {
+      // 检查markdown解析器是否可用
+      if (typeof window.markdownParser === 'undefined') {
+        console.warn('Markdown parser not available, displaying plain text');
+        this.resultDiv.textContent = processedText;
+      } else {
+        // 渲染Markdown
+        this.resultDiv.innerHTML = window.markdownParser.parse(processedText);
+        this.resultDiv.classList.add('markdown-body');
+      }
+
+      // 渲染数学公式
+      if (window.utils.initMathJax()) {
+        try {
+          await MathJax.typesetPromise([this.resultDiv]);
+        } catch (error) {
+          console.error('MathJax渲染失败:', error);
+          setTimeout(async () => {
+            try {
+              await MathJax.typesetPromise([this.resultDiv]);
+            } catch (e) {
+              console.error('MathJax重试渲染失败:', e);
+            }
+          }, 500);
+        }
+      }
+    } catch (error) {
+      console.error('渲染结果失败:', error);
+      // 降级处理：直接显示文本
+      this.resultDiv.textContent = processedText;
+    }
   }
 
   async processImage(imageData) {
@@ -41,20 +118,8 @@ export class OCR {
         result = await this.processWithOpenAI(imageData, settings);
       }
 
-      this.currentOcrText = result;
-      
-      // 处理结果显示...
-      this.resultDiv.innerHTML = result
-        .replace(/\\（/g, '\\(')
-        .replace(/\\）/g, '\\)')
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/([^\n])\n([^\n])/g, '$1\n$2')
-        .trim();
-
-      // 渲染数学公式
-      if (window.utils.initMathJax()) {
-        await MathJax.typesetPromise([this.resultDiv]);
-      }
+      this.updateContent(result);
+      await this.renderResult(result);
 
     } catch (error) {
       window.utils.showToast(`处理失败: ${error.message}`, 'error');
@@ -195,5 +260,20 @@ export class OCR {
 
     const data = await response.json();
     return data.choices[0]?.message?.content || '识别失败';
+  }
+
+  // 添加更新内容的方法
+  updateContent(text) {
+    this.currentOcrText = text;
+    this.resultEditor.value = text;
+  }
+
+  // 添加clear方法
+  clear() {
+    this.updateContent('');
+    this.resultDiv.innerHTML = '';
+    this.resultEditor.style.display = 'none';
+    this.resultDiv.style.display = 'block';
+    this.editBtn.title = '编辑';
   }
 } 
