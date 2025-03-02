@@ -1026,3 +1026,101 @@
         background-color: rgba(255,255,255,0.1);
     }
   }
+  
+  .copy-dropdown {
+    position: fixed;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 0;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .copy-dropdown.show {
+    display: block;
+  }
+  
+  .copy-dropdown-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s;
+  }
+  
+  .copy-dropdown-item:hover {
+    background-color: var(--hover-bg);
+  }
+  
+  .copy-toggle.active {
+    background-color: var(--primary-color-dark);
+  }
+  
+  /* 暗色主题支持 */
+  @media (prefers-color-scheme: dark) {
+    .copy-dropdown {
+        background-color: #0f172a;
+        border-color: #334155;
+    }
+
+    .copy-dropdown-item:hover {
+        background-color: #1e293b;
+    }
+  }
+  
+  /* 复制按钮组样式 */
+  .copy-group {
+    position: relative;
+    display: flex;
+    margin-right: 8px;
+  }
+  
+  .copy-group .copy-btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 12px;
+  }
+  
+    .copy-toggle {
+      position: absolute !important;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 1.75rem !important;
+      min-width: auto !important;
+      padding: 0 !important;
+      border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+  
+    .copy-toggle:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      transform: none !important;
+    }
+  
+    .copy-toggle svg {
+      width: 12px;
+      height: 12px;
+      margin: 0;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  
+    .copy-toggle.active svg {
+      transform: rotate(180deg);
+    }
+  
+  /* 确保复制和翻译按钮组样式一致 */
+  .copy-group, .translate-group {
+    display: flex;
+  }
+  
+  .copy-group .btn, .translate-group .btn {
+    height: 32px;
+  }
+  
+  .copy-dropdown, .translate-dropdown {
+    min-width: 120px;
+  }

@@ -1,7 +1,10 @@
 // UI交互相关功能
 export class UI {
   constructor() {
-    this.copyBtn = document.getElementById('copyBtn');
+    this.copyBtn = document.querySelector('.copy-btn');
+    this.copyDropdown = document.querySelector('.copy-dropdown');
+    this.copyItems = document.querySelectorAll('.copy-dropdown-item');
+    this.copyToggle = document.querySelector('.copy-toggle');
     this.clearBtn = document.getElementById('clearBtn');
     this.screenshotBtn = document.getElementById('screenshotBtn');
     this.resultDiv = document.getElementById('result');
@@ -14,12 +17,32 @@ export class UI {
 
   initEventListeners() {
     // 复制功能
-    this.copyBtn?.addEventListener('click', () => {
-      if (window.ocr?.currentOcrText) {
-        window.services.copyToClipboard(window.ocr.currentOcrText);
-        window.utils.showToast('复制成功', 'success');
-      } else {
-        window.utils.showToast('没有可复制的内容', 'error');
+    this.copyBtn?.addEventListener('click', () => this.copyText('formatted'));
+
+    // 点击复制选项
+    this.copyItems?.forEach(item => {
+      item.addEventListener('click', () => {
+        const copyType = item.dataset.copy;
+        this.copyText(copyType);
+        this.copyDropdown.classList.remove('show');
+        this.copyToggle.classList.remove('active');
+      });
+    });
+
+    // 点击下拉按钮和点击外部关闭
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.copy-toggle')) {
+        const btnRect = this.copyBtn.getBoundingClientRect();
+        
+        // 设置下拉菜单位置
+        this.copyDropdown.style.bottom = (window.innerHeight - btnRect.top + 10) + 'px';
+        this.copyDropdown.style.right = (window.innerWidth - btnRect.right) + 'px';
+        
+        this.copyDropdown.classList.toggle('show');
+        this.copyToggle.classList.toggle('active');
+      } else if (!e.target.closest('.copy-dropdown')) {
+        this.copyDropdown.classList.remove('show');
+        this.copyToggle.classList.remove('active');
       }
     });
 
@@ -43,6 +66,31 @@ export class UI {
         });
       }, 100);
     });
+  }
+
+  copyText(type = 'formatted') {
+    if (!window.ocr?.currentOcrText) {
+      window.utils.showToast('没有可复制的内容', 'error');
+      return;
+    }
+
+    let textToCopy;
+    if (type === 'plain') {
+      // 复制纯文本，移除markdown格式
+      textToCopy = window.ocr.currentOcrText
+        .replace(/```[\s\S]*?```/g, match => match.replace(/```/g, '')) // 移除代码块标记
+        .replace(/\*\*(.*?)\*\*/g, '$1') // 移除加粗
+        .replace(/\*(.*?)\*/g, '$1') // 移除斜体
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // 移除链接，保留文本
+        .replace(/#{1,6}\s/g, '') // 移除标题标记
+        .replace(/`([^`]+)`/g, '$1'); // 移除行内代码标记
+    } else {
+      // 复制格式化文本
+      textToCopy = window.ocr.currentOcrText;
+    }
+
+    window.services.copyToClipboard(textToCopy);
+    window.utils.showToast('复制成功', 'success');
   }
 
   initTemplateSystem() {
