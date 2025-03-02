@@ -1,10 +1,10 @@
 // 翻译相关功能
 export class Translate {
   constructor() {
-    this.translateBtn = document.querySelector('.translate-btn');
-    this.translateDropdown = document.querySelector('.translate-dropdown');
-    this.translateItems = document.querySelectorAll('.translate-dropdown-item');
-    this.translateToggle = document.querySelector('.translate-toggle');
+    this.translateBtn = document.getElementById('translateBtn');
+    this.translateDropdown = document.querySelector('.dropdown-menu');
+    this.translateItems = document.querySelectorAll('[data-lang]');
+    this.translateToggle = document.querySelector('.dropdown-toggle');
     this.resultDiv = document.getElementById('result');
     this.loadingSpinner = document.getElementById('loadingSpinner');
     
@@ -16,38 +16,55 @@ export class Translate {
 
   initEventListeners() {
     // 点击翻译按钮
-    this.translateBtn.addEventListener('click', () => this.translateText());
+    if (this.translateBtn) {
+      this.translateBtn.addEventListener('click', () => this.translateText());
+    }
 
     // 点击语言选项
-    this.translateItems.forEach(item => {
-      item.addEventListener('click', () => {
-        this.translateItems.forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        this.currentLang = item.dataset.lang;
-        this.translateDropdown.classList.remove('show');
-        this.translateToggle.classList.remove('active');
+    if (this.translateItems && this.translateItems.length > 0) {
+      this.translateItems.forEach(item => {
+        if (item) {
+          item.addEventListener('click', () => {
+            this.translateItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            this.currentLang = item.dataset.lang;
+            if (this.translateDropdown) {
+              this.translateDropdown.classList.remove('show');
+            }
+            if (this.translateToggle) {
+              this.translateToggle.classList.remove('active');
+            }
+          });
+        }
       });
-    });
+    }
 
     // 点击下拉按钮和点击外部关闭
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.translate-toggle')) {
-        const btnRect = this.translateBtn.getBoundingClientRect();
-        
-        // 设置下拉菜单位置
-        this.translateDropdown.style.bottom = (window.innerHeight - btnRect.top + 10) + 'px';
-        this.translateDropdown.style.right = (window.innerWidth - btnRect.right) + 'px';
-        
-        this.translateDropdown.classList.toggle('show');
-        this.translateToggle.classList.toggle('active');
-      } else if (!e.target.closest('.translate-dropdown')) {
-        this.translateDropdown.classList.remove('show');
-        this.translateToggle.classList.remove('active');
-      }
-    });
+    if (document && this.translateToggle && this.translateDropdown && this.translateBtn) {
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.dropdown-toggle')) {
+          const btnRect = this.translateBtn.getBoundingClientRect();
+          
+          // 设置下拉菜单位置
+          this.translateDropdown.style.bottom = (window.innerHeight - btnRect.top + 10) + 'px';
+          this.translateDropdown.style.right = (window.innerWidth - btnRect.right) + 'px';
+          
+          this.translateDropdown.classList.toggle('show');
+          this.translateToggle.classList.toggle('active');
+        } else if (!e.target.closest('.dropdown-menu')) {
+          this.translateDropdown.classList.remove('show');
+          this.translateToggle.classList.remove('active');
+        }
+      });
+    }
 
     // 初始化选中状态
-    this.translateItems[0].classList.add('active');
+    if (this.translateItems && this.translateItems.length > 0) {
+      const zhOption = Array.from(this.translateItems).find(item => item.getAttribute('data-lang') === 'ZH');
+      if (zhOption) {
+        zhOption.classList.add('active');
+      }
+    }
   }
 
   async translateText() {

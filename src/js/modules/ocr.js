@@ -25,7 +25,7 @@ export class OCR {
     this.editBtn?.addEventListener('click', () => {
       if (this.resultEditor.style.display === 'none') {
         // 切换到编辑模式
-        this.resultEditor.value = this.resultDiv.innerText || '';
+        this.resultEditor.value = this.currentOcrText || '';
         this.resultEditor.style.display = 'block';
         this.resultDiv.style.display = 'none';
         this.editBtn.title = '保存';
