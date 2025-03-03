@@ -1,17 +1,17 @@
 {
-  "name": "QwenOCR",
+  "name": "AIOCR",
   "version": "1.0.0",
-  "pluginName": "QwenOCR",
-  "description": "基于通义千问大模型的智能OCR识别工具",
+  "pluginName": "AIOCR",
+  "description": "基于多模态大模型的OCR识别工具",
   "main": "index.html",
   "logo": "logo.png",
   "preload": "preload.js",
   "features": [
     {
-      "code": "qwen_ocr",
-      "explain": "Qwen OCR 识别",
+      "code": "ai_ocr",
+      "explain": "AI OCR 识别",
       "cmds": [
-        "qwen",
+        "翻译",
         "ocr",
         "识别",
         "截图文字识别",
