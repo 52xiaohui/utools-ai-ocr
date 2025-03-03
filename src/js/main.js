@@ -194,8 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
       window.ui = new UI();
       
       // 加载设置
-      if (window.settings && window.settings.loadSettings) {
+      if (window.services && typeof window.services.getSettings === 'function') {
         window.settings.loadSettings();
+      } else {
+        console.warn('services.getSettings 未定义，跳过加载设置');
       }
       
       // 处理可能在初始化前接收到的图片
@@ -215,7 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.translate && typeof window.translate.handleTranslate === 'function') {
       window.translate.handleTranslate(targetLang);
     } else {
-      translateText(targetLang);  // 回退到旧的翻译函数
+      console.warn('翻译模块未就绪');
+      showToast('翻译模块未就绪', 'error');
     }
   }
   
@@ -258,8 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let textToCopy;
     
     if (type === 'formatted') {
-      // 如果是格式化文本，获取HTML内容
-      textToCopy = resultElement.innerHTML;
+      // 如果是格式化文本，使用原始的Markdown文本
+      if (window.ocr && window.ocr.currentOcrText) {
+        textToCopy = window.ocr.currentOcrText;
+      } else {
+        // 如果没有原始Markdown，则退回到使用HTML内容
+        textToCopy = resultElement.innerHTML;
+      }
     } else {
       // 否则获取纯文本
       textToCopy = resultElement.textContent;
@@ -284,68 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('没有可复制的内容', 'error');
       }
     }
-  }
-  
-  // 翻译文本函数 (作为备用)
-  function translateText(targetLang) {
-    const resultElement = document.getElementById('result');
-    const textToTranslate = resultElement.textContent;
-    
-    if (!textToTranslate || textToTranslate.trim() === '') {
-        showToast('没有可翻译的内容', 'error');
-        return;
-    }
-    
-    // 显示loading状态
-    const spinner = document.getElementById('loadingSpinner');
-    if (spinner) spinner.style.display = 'block';
-    
-    showToast(`开始翻译到${getLangName(targetLang)}...`, 'info');
-    
-    // 模拟翻译过程
-    setTimeout(() => {
-        const translatedText = `[翻译到${getLangName(targetLang)}] ` + textToTranslate;
-        displayTranslationResult(translatedText);
-        if (spinner) spinner.style.display = 'none';
-    }, 1000);
-  }
-  
-  // 获取语言名称
-  function getLangName(langCode) {
-      const langMap = {
-          'ZH': '中文',
-          'EN': '英文',
-          'JA': '日语',
-          'KO': '韩语',
-          'FR': '法语',
-          'DE': '德语',
-          'ES': '西班牙语',
-          'RU': '俄语'
-      };
-      return langMap[langCode] || langCode;
-  }
-  
-  // 显示翻译结果
-  function displayTranslationResult(text) {
-      const resultElement = document.getElementById('result');
-      if (!resultElement) return;
-      
-      // 判断是否需要Markdown渲染
-      if (resultElement.classList.contains('markdown-content') && window.markdownParser) {
-          resultElement.innerHTML = window.markdownParser.parse(text);
-          // 如果有MathJax，重新渲染公式
-          if (window.MathJax) {
-              try {
-                  window.MathJax.typeset([resultElement]);
-              } catch (error) {
-                  console.error('MathJax渲染失败:', error);
-              }
-          }
-      } else {
-          resultElement.textContent = text;
-      }
-      
-      showToast('翻译完成', 'success');
   }
   
   // 显示Toast通知函数

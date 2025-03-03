@@ -21,17 +21,21 @@ export class UI {
 
     // 点击复制选项
     this.copyItems?.forEach(item => {
-      item.addEventListener('click', () => {
+      item?.addEventListener('click', () => {
         const copyType = item.dataset.copy;
         this.copyText(copyType);
-        this.copyDropdown.classList.remove('show');
-        this.copyToggle.classList.remove('active');
+        if (this.copyDropdown) {
+          this.copyDropdown.classList.remove('show');
+        }
+        if (this.copyToggle) {
+          this.copyToggle.classList.remove('active');
+        }
       });
     });
 
     // 点击下拉按钮和点击外部关闭
     document.addEventListener('click', (e) => {
-      if (e.target.closest('.copy-toggle')) {
+      if (e.target.closest('.copy-toggle') && this.copyBtn && this.copyDropdown && this.copyToggle) {
         const btnRect = this.copyBtn.getBoundingClientRect();
         
         // 设置下拉菜单位置
@@ -40,7 +44,7 @@ export class UI {
         
         this.copyDropdown.classList.toggle('show');
         this.copyToggle.classList.toggle('active');
-      } else if (!e.target.closest('.copy-dropdown')) {
+      } else if (!e.target.closest('.copy-dropdown') && this.copyDropdown && this.copyToggle) {
         this.copyDropdown.classList.remove('show');
         this.copyToggle.classList.remove('active');
       }
@@ -85,7 +89,7 @@ export class UI {
         .replace(/#{1,6}\s/g, '') // 移除标题标记
         .replace(/`([^`]+)`/g, '$1'); // 移除行内代码标记
     } else {
-      // 复制格式化文本
+      // 复制格式化文本 (Markdown格式)
       textToCopy = window.ocr.currentOcrText;
     }
 

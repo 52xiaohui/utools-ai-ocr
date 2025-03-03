@@ -24,10 +24,21 @@ export class Translate {
     if (this.translateItems && this.translateItems.length > 0) {
       this.translateItems.forEach(item => {
         if (item) {
-          item.addEventListener('click', () => {
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // 阻止事件冒泡
+            
+            // 只更新选中状态，不触发翻译
             this.translateItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
             this.currentLang = item.dataset.lang;
+            
+            // 更新翻译按钮的提示文本
+            if (this.translateBtn) {
+              const langName = item.textContent.trim();
+              this.translateBtn.setAttribute('title', `翻译到${langName}`);
+            }
+            
             if (this.translateDropdown) {
               this.translateDropdown.classList.remove('show');
             }
@@ -67,6 +78,28 @@ export class Translate {
     }
   }
 
+  // 添加一个处理翻译的方法，用于从main.js中调用
+  handleTranslate(targetLang) {
+    // 更新当前语言
+    if (targetLang) {
+      this.currentLang = targetLang;
+      
+      // 更新UI选中状态
+      if (this.translateItems) {
+        this.translateItems.forEach(item => {
+          if (item.getAttribute('data-lang') === targetLang) {
+            item.classList.add('active');
+          } else {
+            item.classList.remove('active');
+          }
+        });
+      }
+    }
+    
+    // 调用翻译方法
+    this.translateText();
+  }
+
   async translateText() {
     if (this.isTranslating) {
       window.utils.showToast('正在翻译中，请稍候', 'info');
@@ -74,26 +107,43 @@ export class Translate {
     }
 
     this.isTranslating = true;
-    this.loadingSpinner.style.display = 'block';
+    if (this.loadingSpinner) {
+      this.loadingSpinner.style.display = 'block';
+    }
 
     try {
-      if (!window.ocr.currentOcrText) {
+      if (!window.ocr?.currentOcrText) {
         window.utils.showToast('请先进行OCR识别', 'error');
+        this.isTranslating = false;
+        if (this.loadingSpinner) {
+          this.loadingSpinner.style.display = 'none';
+        }
         return;
       }
 
       const settings = window.services.getSettings();
       const translateService = settings.translateService || 'deeplx';
 
+      // 显示开始翻译的提示
+      window.utils.showToast(`开始翻译到${this.getLangName(this.currentLang)}...`, 'info');
+
       if (translateService === 'deeplx' && !settings.deeplxUrl) {
         window.utils.showToast('请先设置DeepLX API地址', 'error');
         window.settings.settingsModal.classList.add('show');
+        this.isTranslating = false;
+        if (this.loadingSpinner) {
+          this.loadingSpinner.style.display = 'none';
+        }
         return;
       }
 
       if (translateService === 'openai' && !settings.openaiKey) {
         window.utils.showToast('请先设置OpenAI API Key', 'error');
         window.settings.settingsModal.classList.add('show');
+        this.isTranslating = false;
+        if (this.loadingSpinner) {
+          this.loadingSpinner.style.display = 'none';
+        }
         return;
       }
 
@@ -122,14 +172,32 @@ export class Translate {
         }
       }
 
+      // 只有在真正完成翻译后才显示成功提示
       window.utils.showToast('翻译完成', 'success');
     } catch (error) {
       console.error('翻译错误:', error);
       window.utils.showToast(`翻译失败: ${error.message}`, 'error');
     } finally {
       this.isTranslating = false;
-      this.loadingSpinner.style.display = 'none';
+      if (this.loadingSpinner) {
+        this.loadingSpinner.style.display = 'none';
+      }
     }
+  }
+
+  // 获取语言名称
+  getLangName(langCode) {
+    const langMap = {
+      'ZH': '中文',
+      'EN': '英文',
+      'JA': '日语',
+      'KO': '韩语',
+      'FR': '法语',
+      'DE': '德语',
+      'ES': '西班牙语',
+      'RU': '俄语'
+    };
+    return langMap[langCode] || langCode;
   }
 
   async translateWithDeepLX(settings) {
